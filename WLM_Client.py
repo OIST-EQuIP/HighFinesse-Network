@@ -19,9 +19,9 @@ try:
 except socket.error as e:
     print(str(e))
 
-# Define global variable which will store the desired mode and exposure time of each channel
+# Define global variable which will store the desired mode, selected exposure time of each channel, and the PID output for each channel
 # Starting values are Off with 1 ms exposure time
-selec_list = [['Off', '1'], ['Off', '1'], ['Off', '1'], ['Off', '1'], ['Off', '1'], ['Off', '1'], ['Off', '1'], ['Off', '1']]
+selec_list = [['Off', '1', []], ['Off', '1', []], ['Off', '1', []], ['Off', '1', []], ['Off', '1', []], ['Off', '1', []], ['Off', '1', []], ['Off', '1', []]]
 
 # Define another global variable to hold the target wavelengths, initialized to 0
 targets = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -36,19 +36,23 @@ class Transmission(QtCore.QObject):
     def update(self):
         # Create list to store the wavelength error data for plotting
         wvl_error = [[], [], [], [], [], [], [], []]
-    
+
         while True:
             # Pickles and sends selection list    
             to_send = pickle.dumps(selec_list)
             ClientSocket.sendall(to_send)
             # Reads in the length of the message to be received
             length = ClientSocket.recv(8).decode()
-            
+
+            # Initial time measurement
+            ti = time.monotonic()
+
             msg = []
-	    # Reads data sent from the host, stores in msg
+	        # Reads data sent from the host, stores in msg
             while len(b"".join(msg)) < int(length):
                 temp = ClientSocket.recv(8192)
                 msg.append(temp)
+
             # Unpickle msg
             data = pickle.loads(b"".join(msg))
 
@@ -70,8 +74,23 @@ class Transmission(QtCore.QObject):
                         wvl_error[i].pop(0)
                 else:
                     pass
+                
+                # Parameters for PID
+                Kp = 1.0
+                Ki = 1.0
+                Kd = 1.0
+                dt = time.monotonic() - ti
+                # Calculate the output of the PID function for wavelength lock
+                try:
+                    integral += error[i][-1]*ti
+                    derivative = (error[i][-1] - error[i][-2])/dt
+                    selec_list[i][3].append(Kp*error[i][-1])
+                except:
+                    pass
+
             # Send the data that has just been stored to another function for further operation        
             self.data.emit([int_data, wvl_error, wvl_data])
+
 
 	
 # This class sets up and runs the GUI, while using the Transmission class in a separate thread
