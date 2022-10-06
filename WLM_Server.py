@@ -8,8 +8,7 @@ import wlmConst
 import sys
 import pickle
 import numpy as np
-import nidaqmx
-from nidaqmx import stream_writers
+import XEM3001_AD5676R_DAC as fpga_dac
 
 # Load in the DLL provided by HighFinesse
 DLL_PATH = "wlmData.dll"
@@ -76,16 +75,7 @@ def client_handler(connection):
             # Try to change output voltage on the NI device according to PID output
             try:
                 pid_out = selec_list[i][2]
-                with nidaqmx.Task() as task:
-                    # Add in the two available channels
-                    task.ao_channels.add_ao_voltage_chan("Dev1/ao0")
-                    task.ao_channels.add_ao_voltage_chan("Dev1/ao1")
-
-                    input = np.array([pid_out, pid_out])
-                    
-                    # Set the voltage to whatever values are specified in the input array
-                    stream_writers.AnalogMultiChannelWriter(task.out_stream, auto_start=True).write_one_sample(input)
-
+                fpga_dac.dac(i, pid_out)
             except:
                 pass
 
