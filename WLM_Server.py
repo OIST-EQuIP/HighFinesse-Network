@@ -75,7 +75,7 @@ def client_handler(connection):
             # Try to change output voltage on the NI device according to PID output
             try:
                 pid_out = selec_list[i][2]
-                fpga_dac.dac(i, pid_out)
+                fpga_dac.dac(i+1, pid_out)
             except:
                 pass
 
