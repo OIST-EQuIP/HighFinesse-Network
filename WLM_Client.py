@@ -97,12 +97,12 @@ class Transmission(QtCore.QObject):
                         pid_out = float(PID_val[i][1])*wvl_error[i][-1]+float(PID_val[i][2])*integral+float(PID_val[i][3])*derivative
 
                         # If statements prevent voltage range in Toptica rack from being exceeded
-                        if pid_out<4 and pid_out>-0.0285:
+                        if pid_out<2.5 and pid_out>0.0:
                             selec_list[i][2] = pid_out
-                        if pid_out>=4:
-                            selec_list[i][2] = 4.0
-                        if pid_out<=-0.0285:
-                            selec_list[i][2] = -0.0285
+                        if pid_out>=2.5:
+                            selec_list[i][2] = 2.5
+                        if pid_out<=0:
+                            selec_list[i][2] =0
                         print(selec_list[0][2])
                         
                     except:
